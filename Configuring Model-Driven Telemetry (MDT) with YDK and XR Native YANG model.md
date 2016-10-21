@@ -19,7 +19,7 @@ from ydk.services import CRUDService
 from ydk.types import Empty 
 import ydk.models.cisco_ios_xr.Cisco_IOS_XR_telemetry_model_driven_cfg as xr_telemetry
 
-HOST = '192.168.1.2'
+HOST = '192.168.10.2'
 PORT = 830
 USER = 'vagrant'
 PASS = 'vagrant'
@@ -37,12 +37,13 @@ With that, we are now connected to the router:
 CLI Output:
 
 ```
-RP/0/RP0/CPU0:SunC#show netconf-yang clients
-Mon Aug  8 23:01:48.210 UTC
+RP/0/RP0/CPU0:test_XR#show netconf-yang clients 
+Fri Oct 21 01:36:02.850 UTC
 Netconf clients
 client session ID|     NC version|    client connect time|        last OP time|        last OP type|    <lock>|
-       1386485520|            1.1|         0d  0h  0m  5s|                    |                    |        No|
-RP/0/RP0/CPU0:SunC#
+       4261169968|            1.1|         0d  0h  0m 28s|                    |                    |        No|
+RP/0/RP0/CPU0:test_XR#
+
 ``` 
 
 
@@ -89,7 +90,7 @@ new_destination.address_family=xr_telemetry.AfEnum.IPV4
 
 new_ipv4=xr_telemetry.TelemetryModelDriven.DestinationGroups.DestinationGroup().Destinations().Destination().Ipv4()
 new_ipv4.destination_port=5432
-new_ipv4.ipv4_address="192.168.1.1"
+new_ipv4.ipv4_address="192.168.10.3"
 new_ipv4.encoding=xr_telemetry.EncodeTypeEnum.SELF_DESCRIBING_GPB
 new_ipv4.protocol=xr_telemetry.TelemetryModelDriven.DestinationGroups.DestinationGroup().Destinations().Destination().Ipv4().Protocol()
 new_ipv4.protocol.protocol=xr_telemetry.ProtoTypeEnum.TCP
@@ -97,11 +98,37 @@ new_destination.ipv4.append(new_ipv4)
 dgroup.destinations.destination.append(new_destination)
 
 ```
+Once you’ve populated the object, we can apply it to the router using the create method on the CRUDService object from YDK:
 
 ```python
 rpc_service = CRUDService()
 rpc_service.create(xr, dgroup)
 ```
+
+And here is the expected CLI output with the destination group describing where and how to steam:
+
+{% capture "output" %}
+CLI Output:
+
+```
+RP/0/RP0/CPU0:test_XR#sh running-config telemetry model-driven 
+Fri Oct 21 06:35:06.731 UTC
+telemetry model-driven
+ destination-group DG_Test
+  address family ipv4 192.168.10.3 port 5432
+   encoding self-describing-gpb
+   protocol tcp
+  !
+ !
+!
+``` 
+
+{% endcapture %}
+
+<div class="notice--info">
+{{ output | markdownify }}
+</div>
+
 
 ## Define and apply the sensor group
 
@@ -114,11 +141,43 @@ new_sensorpath = sgroup.SensorPaths.SensorPath()
 new_sensorpath.telemetry_sensor_path = 'Cisco-IOS-XR-infra-statsd-oper:infra-statistics/interfaces/interface/latest/generic-counters/bytes-received'
 sgroup.sensor_paths.sensor_path.append(new_sensorpath)
 ```
+
+Now we are ready to submit the sensor group object just populated with the same create method from the CRUDService object of YDK:
+
 ```python
-rpc_service = CRUDService()
+
 rpc_service.create(xr, sgroup)
+
 ```
-Note: you need to initilialize the rpc_service a single time, if you read this document sequentially we have done when creating the destination group and you can remove it
+
+Note: you need to initilialise the rpc_service as `rpc_service = CRUDService()` a single time. If you remember, we have done it when creating the destinatin group at the previous step but if you skipped the previous step, add it before requeting the create for the sensor group.
+
+Let's check the CLI running-configuraiton again. You shoudl now find the destination (from the previous step) and sensor group just created in place:
+
+{% capture "output" %}
+CLI Output:
+
+```
+RP/0/RP0/CPU0:test_XR#show running-config telemetry model-driven 
+Fri Oct 21 06:45:58.444 UTC
+telemetry model-driven
+ destination-group DG_Test
+  address family ipv4 192.168.10.3 port 5432
+   encoding self-describing-gpb
+   protocol tcp
+  !
+ !
+ sensor-group SG_Test
+  sensor-path Cisco-IOS-XR-infra-statsd-oper:infra-statistics/interfaces/interface/latest/generic-counters/bytes-received
+ !
+!
+``` 
+
+{% endcapture %}
+
+<div class="notice--info">
+{{ output | markdownify }}
+</div>
 
 
 ## Define and apply the subcription
@@ -143,18 +202,72 @@ sub.destination_profiles.destination_profile.append(new_dprofile)
 ```
 
 ```python
-rpc_service = CRUDService()
 rpc_service.create(xr, sub)
 ```
 
+If you check now the running-configuration, you should have a complete TCP dial-out telemetry configuation
+
+{% capture "output" %}
+CLI Output:
+
+```
+P/0/RP0/CPU0:test_XR#show running-config telemetry model-driven 
+Fri Oct 21 06:51:06.926 UTC
+telemetry model-driven
+ destination-group DG_Test
+  address family ipv4 192.168.10.3 port 5432
+   encoding self-describing-gpb
+   protocol tcp
+  !
+ !
+ sensor-group SG_Test
+  sensor-path Cisco-IOS-XR-infra-statsd-oper:infra-statistics/interfaces/interface/latest/generic-counters/bytes-received
+ !
+ subscription 1
+  sensor-group-id SG_Test sample-interval 30000
+  destination-id DG_Test
+ !
+!
+``` 
+
+{% endcapture %}
+
+<div class="notice--info">
+{{ output | markdownify }}
+</div>
 
 ## Clean
 
+Last two commands proposed support deleting the configuration just submitted and disconnect from the router the Netconf session.
+
 ```python
-rpc_service = CRUDService()
 rpc_service.delete(xr, xr_telemetry.TelemetryModelDriven())
 xr.close()
 ```
+As condirmed by the router's 'show running-config'
+
+{% capture "output" %}
+CLI Output:
+
+```
+RP/0/RP0/CPU0:test_XR#show running-config telemetry model-driven 
+Fri Oct 21 06:59:46.743 UTC
+% No such configuration item(s)
+
+RP/0/RP0/CPU0:test_XR#
+
+``` 
+
+{% endcapture %}
+
+<div class="notice--info">
+{{ output | markdownify }}
+</div>
 
 ## Conclusion
+
+This tutorial repeats most of the concepts explained by Shelly in her [earlier tutorial](https://xrdocs.github.io/telemetry/tutorials/2016-08-08-configuring-model-driven-telemetry-with-ydk/). The same values in programmability using YANG models, automatic generation of Python classes that inherit the syntactic checks and requirements of the underlying model, while also handling all the details of the underlying encoding and transport.
+
+At the same time it provides an alternative YANG model that at the time of writing is the only option to demostrate a working XR telemetry dial-out solution using YDK. 
+I hope this will be usefull when preparing POC or just learning YDK and telemetry.
 
