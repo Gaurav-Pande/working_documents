@@ -5,16 +5,49 @@ In an [earlier tutorial](https://xrdocs.github.io/telemetry/tutorials/2016-08-08
 I strongly suggest to read and understand her initial tutorial because it describes the basis of YDK. 
 I decided to prepare this second document, covering a similar subject only because the OpenConfig Telemetry YANG model is still incomplete and you will not be able to set the protocol and encoding fields in a destination group. 
 
-OpenConfig YANG models are the preferred option for POCs (showing openess in our strategy). At the same time, if you need to demonstrate a working MDT dial-out configuration using YANG models, you must use a IOS XR Native YANG model using YDK (described in this tutorial) or XML schema as Shelly describes in [Configuring MDT with OpenConfig YANG] (https://xrdocs.github.io/telemetry/tutorials/2016-07-25-configuring-model-driven-telemetry-mdt-with-yang/). The engineering team is working to get published a complete OpenConfig for our XR telemetry configuration but this may take a while.
+OpenConfig YANG models are the preferred option for POCs, demostrating an dopen strategy. At the same time, if you need to demonstrate or implement a complete (working) MDT dial-out configuration using YANG models, you must use a IOS XR Native YANG model using YDK (described in this tutorial) or XML schema as Shelly describes in [Configuring MDT with OpenConfig YANG] (https://xrdocs.github.io/telemetry/tutorials/2016-07-25-configuring-model-driven-telemetry-mdt-with-yang/). The engineering team is working to finalise a complete OpenConfig YANG model for our XR telemetry configuration but this may take some XR releases.
 
-Note: I have tested the configuration proposed in this document using IOS-XR version 6.2.1.15I, noticing an issue with earlier versions discarding the destination group TCP protocol configuration.
+Note: I have tested the configuration proposed in this document using IOS-XRv version 6.2.1.15I, noticing an issue with earlier versions that accept but doesn't implement the destination group TCP protocol configuration.
 
-If you are not familiar with IOS-XR, please follow Akshat tutorial [IOS-XR Vagrant Quick Start](https://xrdocs.github.io/application-hosting/tutorials/iosxr-vagrant-quickstart) for step by step instructions.
+If you are not familiar with IOS-XRv, please follow Akshat tutorial [IOS-XRv Vagrant Quick Start](https://xrdocs.github.io/application-hosting/tutorials/iosxr-vagrant-quickstart) for step by step instructions.
 
-## Connect to the router
+## Tutorial goal
+
+By the end of this tutorial, you will have implemented the follwoing configuration using YDK on your router under testing. If you are unfamiliar with the configration just check the following tutorial [Configuring Model-Driven Telemetry (MDT)](https://xrdocs.github.io/telemetry/tutorials/2016-07-21-configuring-model-driven-telemetry-mdt/)
+
+{% capture "output" %}
+CLI Output:
+
+```
+P/0/RP0/CPU0:test_XR#show running-config telemetry model-driven 
+Fri Oct 21 06:51:06.926 UTC
+telemetry model-driven
+ destination-group DG_Test
+  address family ipv4 192.168.10.3 port 5432
+   encoding self-describing-gpb
+   protocol tcp
+  !
+ !
+ sensor-group SG_Test
+  sensor-path Cisco-IOS-XR-infra-statsd-oper:infra-statistics/interfaces/interface/latest/generic-counters/bytes-received
+ !
+ subscription 1
+  sensor-group-id SG_Test sample-interval 30000
+  destination-id DG_Test
+ !
+!
+``` 
+
+{% endcapture %}
+
+
+## Connect to the router and import YDK's library
+
+As described in older YDK tutorails, we are importing the YDK Netconf library to cominicate with the router and other key YDK's library like the CRUDService (taking care of create, read, update and delete YDK objects from the router) and the IOS_XR native YDK model.
+The Empty type that we import from ydk.types has a special purpose later in the document to signal with its presence, the request to activate the submitted subcription.
 
 ```python
-from ydk.providers import NetconfServiceProvider
+from ydk.providers import NetconfServiceProvider 
 from ydk.services import CRUDService
 from ydk.types import Empty 
 import ydk.models.cisco_ios_xr.Cisco_IOS_XR_telemetry_model_driven_cfg as xr_telemetry
@@ -31,7 +64,7 @@ xr = NetconfServiceProvider(address=HOST,
 	protocol = 'ssh')
 ```
 
-With that, we are now connected to the router:
+With that, we are now connected to the router (check on the router):
 
 {% capture "output" %}
 CLI Output:
@@ -46,8 +79,6 @@ RP/0/RP0/CPU0:test_XR#
 
 ``` 
 
-
-
 {% endcapture %}
 
 <div class="notice--info">
@@ -55,9 +86,8 @@ RP/0/RP0/CPU0:test_XR#
 </div>
 
 
-
-
 ## Define and apply the destination group
+
 
 
 {% capture "output" %}
