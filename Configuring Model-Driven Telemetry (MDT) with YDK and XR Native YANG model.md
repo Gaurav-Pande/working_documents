@@ -2,10 +2,10 @@
 
 In an [earlier tutorial](https://xrdocs.github.io/telemetry/tutorials/2016-08-08-configuring-model-driven-telemetry-with-ydk/), Shelly introduces a methodology to configure MDT using YDK and the OpenConfig Telemetry YANG model.
 
-I strongly suggest to read and understand her initial tutorial because it describes the basis of using YDK.
-I decided to prepare this second document, covering a similar subject because the OpenConfig Telemetry YANG model is still incomplete and you will not be able to set the protocol and encoding fields in a destination group.
+I strongly suggest to read and understand her initial tutorial because it describes the basis of using YDK. I decided to prepare this second document, covering a similar subject because the OpenConfig Telemetry YANG model is still incomplete and you will not be able to set the protocol and encoding fields in a destination group.
 
-OpenConfig YANG models are the preferred option for POCs, demonstrating Cisco open configuration efforts. At the same time, if you need to demonstrate or implement a complete (working) MDT dial-out configuration using YANG models, you must still use a IOS XR Native YANG model with YDK (described in this tutorial) or with an XML schema as Shelly describes in [Configuring MDT with OpenConfig YANG] (https://xrdocs.github.io/telemetry/tutorials/2016-07-25-configuring-model-driven-telemetry-mdt-with-yang/). The engineering team is working to finalise a complete OpenConfig YANG model for our XR telemetry configuration but this effort may take some XR releases.
+OpenConfig YANG models are the preferred option for POCs, demonstrating Cisco open configuration efforts. At the same time, if you need to demonstrate or implement a complete (working) MDT dial-out configuration using YANG models, you must still use a IOS XR Native YANG model with YDK (described in this tutorial) or with an XML schema as Shelly describes in [Configuring MDT with OpenConfig YANG](https://xrdocs.github.io/telemetry/tutorials/2016-07-25-configuring-model-driven-telemetry-mdt-with-yang/).  
+The engineering team is working to finalise a complete OpenConfig YANG model for our XR telemetry configuration but this effort may take some XR releases.
 
 Note: I have tested the configuration in this document using IOS-XRv version 6.2.1.15I, noticing an issue with earlier versions that accept but don't implement the destination group TCP protocol configuration. I have also used the [ydk-py version 0.5.1](https://github.com/CiscoDevNet/ydk-py) and after installing YDK, you can check `ydk-models-cisco-ios-xr` current support for XR 6.1.1 using `pip list` command.
 
@@ -57,7 +57,8 @@ telemetry model-driven
 
 ## Connect to the router and import YDK's libraries
 
-As described in previous YDK tutorials, we are importing the YDK Netconf library to communicate with the router. We also import the CRUDService YDK's library (taking care of create, read, update and delete YDK objects from the router) and the IOS_XR native YDK model.
+As described in previous YDK tutorials, we are importing the YDK Netconf library to communicate with the router.  
+We also import the CRUDService YDK's library (taking care of create, read, update and delete YDK objects from the router) and the IOS_XR native YDK model.  
 The Empty type that we import from ydk.types has a special purpose later in the document to signal with its presence, the request to activate the submitted subscription.
 
 ```python
@@ -102,10 +103,10 @@ RP/0/RP0/CPU0:test_XR#
 
 ## Define and apply the destination group
 
-To access the native XR telemetry YANG model used in this tutorial (Cisco-IOS-XR-telemetry-model-driven-cfg.yang) use the [YANG public repository](https://github.com/YangModels/yang/tree/master/vendor/cisco/xr). 
+To access the native XR telemetry YANG model used in this tutorial (Cisco-IOS-XR-telemetry-model-driven-cfg.yang) use the [YANG public repository](https://github.com/YangModels/yang/tree/master/vendor/cisco/xr).  
 Explore this same repository to see the other vendors and standard model YANGs but just in case you are looking for the OpenConfig, you will have to use [YANG OpenConfig repository](https://github.com/openconfig/public).
 
-To explore the telemetry YANG model read directly the yang file or for example, follow a friendlier  tree that the Pyang utility generates.
+To explore the telemetry YANG model read directly the yang file or for example, follow a friendlier  tree that the Pyang utility generates.  
 Note: if you have installed the YDK environment, you can use Pyang from this environment as `pyang -f tree Cisco-IOS-XR-telemetry-model-driven-cfg.yang` 
 
 {% capture "output" %}
@@ -282,7 +283,8 @@ rpc_service.create(xr, sgroup)
 
 ```
 
-Note: you need to initialize the rpc_service as `rpc_service = CRUDService()` a single time. If you remember, we have done it when creating the destination group but if you skipped the previous step, add it before requesting to create for the sensor group.
+Note: you need to initialize the rpc_service as `rpc_service = CRUDService()` a single time.  
+If you remember, we have already done it when creating the destination group but if you skipped the previous step, add it before requesting to create for the sensor group.
 
 Let's check the CLI running-configuration again. You should now find the destination (from the previous step) and sensor group just created in place:
 
@@ -439,6 +441,6 @@ RP/0/RP0/CPU0:test_XR#
 
 This tutorial repeats most of the concepts explained by Shelly in her [earlier tutorial](https://xrdocs.github.io/telemetry/tutorials/2016-08-08-configuring-model-driven-telemetry-with-ydk/). The same values in programmability using YANG models, automatic generation of Python classes that inherit the syntactic checks and requirements of the underlying model, while also handling all the details of the underlying encoding and transport.
 
-At the same time, this tutorial introduces an alternative YANG telemetry model that at the time of writing is the only option to demonstrate a working XR dial-out telemetry solution using YDK. 
-I hope this will be useful when preparing a POC or just learning YDK and telemetry.
+At the same time, this tutorial introduces an alternative YANG telemetry model that at the time of writing is the only option to demonstrate a working XR dial-out telemetry solution using YDK.  
+I hope this will be useful when preparing a POC or just learning YDK and XR telemetry.
 
