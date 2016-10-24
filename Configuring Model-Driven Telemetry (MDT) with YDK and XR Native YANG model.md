@@ -109,7 +109,7 @@ To explore the telemetry YANG model read directly the yang file or for example, 
 Note: if you have installed the YDK environment, you can use Pyang from this environment as `pyang -f tree Cisco-IOS-XR-telemetry-model-driven-cfg.yang` 
 
 {% capture "output" %}
-PYANG Output for the destination-groups:
+PYANG output for the destination-groups:
 
 ```
 module: Cisco-IOS-XR-telemetry-model-driven-cfg
@@ -241,7 +241,7 @@ telemetry model-driven
 As for the destination group, this is the section of the YANG model for the sensor group:
 
 {% capture "output" %}
-PYANG Output for the sensor-groups:
+PYANG output for the sensor-groups:
 
 ```
 module: Cisco-IOS-XR-telemetry-model-driven-cfg
@@ -317,7 +317,7 @@ telemetry model-driven
 The final step in our configration is the subcription.
 
 {% capture "output" %}
-PYANG Output for the subcription:
+PYANG output for the subcription:
 
 ```
 module: Cisco-IOS-XR-telemetry-model-driven-cfg
